@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Patient Details')}"></head>
+<body>
+    <div class="wrapper">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        
+        <div class="main-content">
+            <div th:replace="~{fragments/navbar :: navbar}"></div>
+            
+            <div class="content-wrapper">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="h3 mb-0 text-gray-800">
+                        <span th:text="${patient.fullName}"></span> 
+                        <span class="fs-5 text-muted">(<span th:text="${patient.patientCode}"></span>)</span>
+                    </h2>
+                    <a href="/patients" class="btn btn-secondary shadow-sm">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Patients
+                    </a>
+                </div>
+                
+                <div th:if="${param.success}" class="alert alert-success shadow-sm alert-dismissible fade show">
+                    <i class="bi bi-check-circle me-2"></i> <span th:text="${param.success}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div th:if="${param.error}" class="alert alert-danger shadow-sm alert-dismissible fade show">
+                    <i class="bi bi-exclamation-triangle me-2"></i> <span th:text="${param.error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Profile Info -->
+                    <div class="col-xl-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-white py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Patient Profile</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item px-0"><strong>Age:</strong> <span class="float-end" th:text="${patient.age}"></span></li>
+                                    <li class="list-group-item px-0"><strong>Gender:</strong> <span class="float-end" th:text="${patient.gender}"></span></li>
+                                    <li class="list-group-item px-0"><strong>Blood Group:</strong> <span class="float-end" th:text="${patient.bloodGroup}"></span></li>
+                                    <li class="list-group-item px-0"><strong>Phone:</strong> <span class="float-end" th:text="${patient.phoneNumber}"></span></li>
+                                    <li class="list-group-item px-0"><strong>Emergency:</strong> <span class="float-end" th:text="${patient.emergencyContact}"></span></li>
+                                    <li class="list-group-item px-0"><strong>Room:</strong> <span class="float-end" th:text="${patient.roomNumber}"></span></li>
+                                    <li class="list-group-item px-0">
+                                        <strong>Status:</strong> 
+                                        <span class="float-end badge" th:classappend="${patient.admissionStatus == 'Critical' ? 'bg-danger' : (patient.admissionStatus == 'Warning' ? 'bg-warning' : 'bg-success')}" th:text="${patient.admissionStatus}"></span>
+                                    </li>
+                                </ul>
+                                
+                                <div class="mt-4">
+                                    <h6 class="font-weight-bold text-dark">Medical History</h6>
+                                    <p class="text-muted small mb-3" th:text="${patient.medicalHistory} ?: 'None reported'"></p>
+                                    
+                                    <h6 class="font-weight-bold text-dark">Allergies</h6>
+                                    <p class="text-muted small mb-0" th:text="${patient.allergies} ?: 'None reported'"></p>
+                                </div>
+                                
+                                <hr class="my-4">
+                                <h6 class="font-weight-bold text-dark mb-3">Vitals History</h6>
+                                <a th:href="@{/export/patient/{id}/csv(id=${patient.id})}" class="btn btn-sm btn-outline-success mb-3 w-100">
+                                    <i class="bi bi-file-earmark-spreadsheet"></i> Export Vitals to CSV
+                                </a>
+                                
+                                <canvas id="vitalsChart" width="100" height="80"></canvas>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Reports & AI Analysis -->
+                    <div class="col-xl-8">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Upload Medical Report</h6>
+                            </div>
+                            <div class="card-body bg-light">
+                                <form th:action="@{/reports/upload}" method="post" enctype="multipart/form-data" class="d-flex align-items-center">
+                                    <input type="hidden" name="patientId" th:value="${patient.id}">
+                                    <input type="file" name="file" class="form-control me-3" accept=".pdf, .jpg, .jpeg, .png" required>
+                                    <button type="submit" class="btn btn-primary text-nowrap">
+                                        <i class="bi bi-upload me-1"></i> Upload & Analyze
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Report History List -->
+                        <div th:each="report : ${reports}" class="card shadow-sm mb-4 border-left-primary">
+                            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="m-0 font-weight-bold text-dark">
+                                        <i class="bi bi-file-earmark-medical text-primary me-2"></i>
+                                        <span th:text="${report.originalFileName}"></span>
+                                    </h6>
+                                    <small class="text-muted">Uploaded on <span th:text="${#temporals.format(report.uploadedAt, 'MMM dd, yyyy HH:mm')}"></span></small>
+                                </div>
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" th:attr="data-bs-target='#reportCollapse-' + ${report.id}">
+                                    Toggle Details
+                                </button>
+                            </div>
+                            
+                            <div th:id="'reportCollapse-' + ${report.id}" class="collapse show">
+                                <div class="card-body">
+                                    <ul class="nav nav-tabs" th:id="'tab-' + ${report.id}" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active fw-bold text-primary" th:id="'ai-tab-' + ${report.id}" data-bs-toggle="tab" th:attr="data-bs-target='#ai-' + ${report.id}" type="button" role="tab">
+                                                <i class="bi bi-magic me-1"></i> AI Analysis
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link text-muted" th:id="'raw-tab-' + ${report.id}" data-bs-toggle="tab" th:attr="data-bs-target='#raw-' + ${report.id}" type="button" role="tab">
+                                                <i class="bi bi-file-text me-1"></i> Raw OCR Text
+                                            </button>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content pt-3" th:id="'tabContent-' + ${report.id}">
+                                        <div class="tab-pane fade show active" th:id="'ai-' + ${report.id}" role="tabpanel">
+                                            <div class="p-3 bg-light rounded" th:utext="${report.aiAnalysis}"></div>
+                                        </div>
+                                        <div class="tab-pane fade" th:id="'raw-' + ${report.id}" role="tabpanel">
+                                            <pre class="bg-dark text-light p-3 rounded small" style="white-space: pre-wrap;" th:text="${report.extractedText}"></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div th:if="${#lists.isEmpty(reports)}" class="text-center py-5 text-muted">
+                            <i class="bi bi-folder2-open display-4 mb-3 d-block opacity-50"></i>
+                            <p>No medical reports uploaded yet.</p>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const patientId = /*[[${patient.id}]]*/ 0;
+        /*]]>*/
+        
+        fetch(`/api/analytics/vitals/${patientId}`)
+            .then(response => response.json())
+            .then(data => {
+                if(data.length === 0) return;
+                
+                // data is ordered DESC, we want ASC for the chart
+                data.reverse();
+                
+                const labels = data.map(v => {
+                    let d = new Date(v.timestamp);
+                    return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+                });
+                
+                const hrData = data.map(v => v.heartRate);
+                
+                const ctx = document.getElementById('vitalsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Heart Rate',
+                            data: hrData,
+                            borderColor: '#dc3545',
+                            tension: 0.3,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                suggestedMin: 50,
+                                suggestedMax: 150
+                            }
+                        }
+                    }
+                });
+            });
+    </script>
+</body>
+</html>

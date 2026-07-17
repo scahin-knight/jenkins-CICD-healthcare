@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm w-100">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand mb-0 h1 d-lg-none">HealthWatch AI</span>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <form class="d-flex ms-auto me-3 position-relative">
+                    <input class="form-control rounded-pill pe-5 bg-light border-0" type="search" placeholder="Search patients..." aria-label="Search">
+                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+                </form>
+                
+                <ul class="navbar-nav mb-2 mb-lg-0 align-items-center">
+                    <li class="nav-item me-3">
+                        <a class="nav-link position-relative" href="/alerts">
+                            <i class="bi bi-bell fs-5"></i>
+                            <span class="position-absolute top-25 start-75 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                <span class="visually-hidden">New alerts</span>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link text-dark fw-medium">
+                            <i class="bi bi-calendar3 me-1"></i> <span id="currentDate">Date</span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <script>
+            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        </script>
+    </nav>
+</body>
+</html>

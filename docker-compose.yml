@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  healthwatch-db:
+    image: postgres:15-alpine
+    container_name: healthwatch-db
+    environment:
+      POSTGRES_DB: healthwatch
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - healthwatch-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  healthwatch-app:
+    build: .
+    container_name: healthwatch-app
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://healthwatch-db:5432/healthwatch
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=password123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      - healthwatch-db
+    restart: unless-stopped
+
+volumes:
+  healthwatch-data:

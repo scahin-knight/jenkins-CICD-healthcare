@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="sidebar" class="sidebar bg-dark text-white p-3">
+        <div class="d-flex align-items-center mb-4 text-white text-decoration-none">
+            <i class="bi bi-heart-pulse-fill fs-3 text-danger me-2"></i>
+            <span class="fs-4 fw-bold">HealthWatch<span class="text-primary">AI</span></span>
+        </div>
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto mt-3">
+            <li class="nav-item">
+                <a th:href="@{/}" class="nav-link text-white" th:classappend="${#httpServletRequest.requestURI == '/' ? 'active bg-primary' : ''}">
+                    <i class="bi bi-grid me-2"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/patients}" class="nav-link text-white" th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/patients') ? 'active bg-primary' : ''}">
+                    <i class="bi bi-people me-2"></i> Patients
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/alerts}" class="nav-link text-white" th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/alerts') ? 'active bg-primary' : ''}">
+                    <i class="bi bi-bell me-2"></i> Alerts
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/ai-assistant}" class="nav-link text-white" th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/ai-assistant') ? 'active bg-primary' : ''}">
+                    <i class="bi bi-robot me-2"></i> AI Assistant
+                </a>
+            </li>
+        </ul>
+        <hr>
+        <div class="dropdown">
+            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle fs-4 me-2"></i>
+                <strong>Admin</strong>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                <li><a class="dropdown-item" href="#">Settings</a></li>
+                <li><a class="dropdown-item" href="#">Profile</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#">Sign out</a></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
