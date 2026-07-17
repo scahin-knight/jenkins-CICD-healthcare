@@ -5,77 +5,67 @@ pipeline {
             args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
         }
     }
-
-    environment {
-        DOCKER_IMAGE_NAME = 'healthwatch-ai'
-        // If you're pushing to a registry, uncomment and update these:
-        // DOCKER_REGISTRY = 'your-registry-url'
-        // DOCKER_CREDENTIALS_ID = 'your-docker-credentials-id'
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                // Checks out source code from the SCM configured in the Jenkins job
                 checkout scm
             }
         }
-
-        stage('Build') {
+        stage('Build and Test') {
             steps {
-                echo 'Building the application...'
-                sh 'mvn clean package -DskipTests'
+                // Build the project and create a JAR file (run from the root directory where pom.xml is)
+                sh 'mvn clean package'
             }
         }
-
-        stage('Test') {
-            steps {
-                echo 'Running tests...'
-                sh 'mvn test'
+        stage('Static Code Analysis') {
+            environment {
+                // Update this to your SonarQube server URL
+                SONAR_URL = "http://18.61.84.247:9000/"
             }
-            post {
-                always {
-                    // Publish JUnit test results
-                    junit 'target/surefire-reports/*.xml'
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
+                    sh 'mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
                 }
             }
         }
-
-        stage('Build Docker Image') {
-            steps {
-                echo 'Building Docker image...'
-                script {
-                    // Requires the Docker Pipeline plugin to be installed in Jenkins
-                    dockerImage = docker.build("${DOCKER_IMAGE_NAME}:${env.BUILD_ID}")
-                }
+        stage('Build and Push Docker Image') {
+            environment {
+                // Update Dockerhub username/repo as needed
+                DOCKER_IMAGE = "sachin2008/healthwatch-ai:${BUILD_NUMBER}"
+                REGISTRY_CREDENTIALS = credentials('docker-cred')
             }
-        }
-
-        // Optional: Stage for pushing the Docker image
-        /*
-        stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", DOCKER_CREDENTIALS_ID) {
+                    sh 'docker build -t ${DOCKER_IMAGE} .'
+                    def dockerImage = docker.image("${DOCKER_IMAGE}")
+                    docker.withRegistry('https://index.docker.io/v1/', "docker-cred") {
                         dockerImage.push()
-                        dockerImage.push('latest')
                     }
                 }
             }
         }
-        */
-    }
-
-    post {
-        success {
-            echo 'Pipeline executed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed. Check the logs for details.'
-        }
-        always {
-            echo 'Cleaning up workspace...'
-            cleanWs()
+        stage('Update Deployment File') {
+            environment {
+                GIT_REPO_NAME = "jenkins-CICD-healthcare"
+                GIT_USER_NAME = "scahin-knight"
+            }
+            steps {
+                withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                    sh '''
+                        git config user.email "your.email@example.com"
+                        git config user.name "Your Name"
+                        BUILD_NUMBER=${BUILD_NUMBER}
+                        
+                        # Note: Update the path below to point to your actual Kubernetes deployment file
+                        # sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" path/to/deployment.yml
+                        # git add path/to/deployment.yml
+                        # git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+                        # git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                        
+                        echo "Deployment update skipped. Please configure your deployment.yml path."
+                    '''
+                }
+            }
         }
     }
 }
