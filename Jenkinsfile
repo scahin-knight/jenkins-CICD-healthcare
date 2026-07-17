@@ -1,7 +1,10 @@
 pipeline {
-    // We use 'agent any' at the top level to allocate a Jenkins node and workspace.
-    // We will use a Docker container specifically for the Maven Build and Test stages.
-    agent any
+    agent {
+        docker {
+            image 'abhishekf5/maven-abhishek-docker-agent:v1'
+            args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
+        }
+    }
 
     environment {
         DOCKER_IMAGE_NAME = 'healthwatch-ai'
@@ -18,43 +21,27 @@ pipeline {
             }
         }
 
-        // Grouping Maven stages to run inside a Maven Docker container
-        stage('Maven Build & Test') {
-            agent {
-                docker {
-                    // Using official Maven Docker image with JDK 17
-                    image 'maven:3.9.4-eclipse-temurin-17'
-                    // reuseNode true ensures it uses the same workspace checked out above
-                    reuseNode true
-                    // Map the local Maven repository to cache dependencies between builds
-                    args '-v $HOME/.m2:/root/.m2'
-                }
+        stage('Build') {
+            steps {
+                echo 'Building the application...'
+                sh 'mvn clean package -DskipTests'
             }
-            stages {
-                stage('Build') {
-                    steps {
-                        echo 'Building the application inside Docker...'
-                        sh 'mvn clean package -DskipTests'
-                    }
-                }
+        }
 
-                stage('Test') {
-                    steps {
-                        echo 'Running tests inside Docker...'
-                        sh 'mvn test'
-                    }
-                    post {
-                        always {
-                            // Publish JUnit test results
-                            junit 'target/surefire-reports/*.xml'
-                        }
-                    }
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    // Publish JUnit test results
+                    junit 'target/surefire-reports/*.xml'
                 }
             }
         }
 
         stage('Build Docker Image') {
-            // This runs on the base node (which has Docker CLI installed)
             steps {
                 echo 'Building Docker image...'
                 script {
