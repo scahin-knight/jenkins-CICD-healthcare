@@ -14,6 +14,7 @@ pipeline {
         stage('Build and Test') {
             steps {
                 // Build the project and create a JAR file (run from the root directory where pom.xml is)
+                 sh 'java -version'
                 sh 'mvn clean package'
             }
         }
