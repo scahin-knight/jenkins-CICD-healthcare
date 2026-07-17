@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: healthwatch-ai
+  labels:
+    app: healthwatch-ai
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: healthwatch-ai
+  template:
+    metadata:
+      labels:
+        app: healthwatch-ai
+    spec:
+      containers:
+      - name: healthwatch-ai
+        image: your-dockerhub-username/healthwatch-ai:replaceImageTag
+        ports:
+        - containerPort: 8080

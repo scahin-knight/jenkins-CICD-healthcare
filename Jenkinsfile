@@ -56,13 +56,11 @@ pipeline {
                         git config user.name "Your Name"
                         BUILD_NUMBER=${BUILD_NUMBER}
                         
-                        # Note: Update the path below to point to your actual Kubernetes deployment file
-                        # sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" path/to/deployment.yml
-                        # git add path/to/deployment.yml
-                        # git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-                        # git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-                        
-                        echo "Deployment update skipped. Please configure your deployment.yml path."
+                        # Using the k8s/deployment.yml file based on the example
+                        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" k8s/deployment.yml
+                        git add k8s/deployment.yml
+                        git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+                        git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
                     '''
                 }
             }
