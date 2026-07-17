@@ -1,3 +1,5 @@
+<img width="575" height="230" alt="image" src="https://github.com/user-attachments/assets/4e5ff815-4130-43d2-93a0-ffbd40763787" />
+
 # HealthWatch AI
 
 Enterprise-Grade AI-Powered Real-Time Patient Health Monitoring System
